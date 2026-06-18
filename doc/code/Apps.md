@@ -13,7 +13,7 @@ Every app in InfiniTime is its own class.
 An instance of the class is created when the app is launched, and destroyed when the user exits the app.
 Apps run inside the `DisplayApp` task (briefly discussed [here](./Intro.md)).
 Apps are responsible for everything drawn on the screen when they are running.
-Apps can be refreshed periodically and reacts to external events (touch or button).
+Apps can be refreshed periodically and react to external events (touch or button).
 
 ## Interface
 
