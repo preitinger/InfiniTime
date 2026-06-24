@@ -398,6 +398,14 @@ list(APPEND SOURCE_FILES
         displayapp/screens/Alarm.cpp
         displayapp/screens/Styles.cpp
         displayapp/screens/WeatherSymbols.cpp
+        displayapp/screens/ShoppingList.cpp
+        displayapp/screens/ShoppingListAdmin.cpp
+        displayapp/screens/prDoneState.cpp
+        displayapp/screens/prTextWindow.cpp
+        displayapp/screens/prRealFiles.cpp
+        displayapp/screens/prFixedStream.cpp
+        displayapp/screens/prValidation.cpp
+        displayapp/screens/prUtils.cpp
         displayapp/Colors.cpp
         displayapp/widgets/Counter.cpp
         displayapp/widgets/PageIndicator.cpp

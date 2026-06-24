@@ -22,14 +22,14 @@ Calculator::Calculator() {
   resultLabel = lv_label_create(lv_scr_act(), nullptr);
   lv_label_set_long_mode(resultLabel, LV_LABEL_LONG_CROP);
   lv_label_set_align(resultLabel, LV_LABEL_ALIGN_RIGHT);
-  lv_label_set_text_fmt(resultLabel, "%" PRId64, result);
+  lv_label_set_text_fmt(resultLabel, "%" "lld", result);
   lv_obj_set_size(resultLabel, 200, 20);
   lv_obj_set_pos(resultLabel, 10, 5);
 
   valueLabel = lv_label_create(lv_scr_act(), nullptr);
   lv_label_set_long_mode(valueLabel, LV_LABEL_LONG_CROP);
   lv_label_set_align(valueLabel, LV_LABEL_ALIGN_RIGHT);
-  lv_label_set_text_fmt(valueLabel, "%" PRId64, value);
+  lv_label_set_text_fmt(valueLabel, "%" "lld", value);
   lv_obj_set_size(valueLabel, 200, 20);
   lv_obj_set_pos(valueLabel, 10, 35);
 
@@ -249,7 +249,7 @@ void Calculator::UpdateResultLabel() const {
   bool negative = (remainder < 0);
 
   if (remainder == 0) {
-    lv_label_set_text_fmt(resultLabel, "%" PRId64, integer);
+    lv_label_set_text_fmt(resultLabel, "%" "lld", integer);
     return;
   }
 
@@ -266,9 +266,9 @@ void Calculator::UpdateResultLabel() const {
   }
 
   if ((integer == 0) && negative) {
-    lv_label_set_text_fmt(resultLabel, "-0.%0*" PRId64, minWidth, remainder);
+    lv_label_set_text_fmt(resultLabel, "-0.%0*" "lld", minWidth, remainder);
   } else {
-    lv_label_set_text_fmt(resultLabel, "%" PRId64 ".%0*" PRId64, integer, minWidth, remainder);
+    lv_label_set_text_fmt(resultLabel, "%" "lld" ".%0*" "lld", integer, minWidth, remainder);
   }
 }
 
@@ -306,13 +306,13 @@ void Calculator::UpdateValueLabel() {
       }
 
       if ((integer == 0) && negative) {
-        lv_label_set_text_fmt(valueLabel, "-0.%0*" PRId64, minWidth, printRemainder);
+        lv_label_set_text_fmt(valueLabel, "-0.%0*" "lld", minWidth, printRemainder);
       } else if (offset == FIXED_POINT_OFFSET) {
-        lv_label_set_text_fmt(valueLabel, "%" PRId64, integer);
+        lv_label_set_text_fmt(valueLabel, "%" "lld", integer);
       } else if ((offset == (FIXED_POINT_OFFSET / 10)) && (remainder == 0)) {
-        lv_label_set_text_fmt(valueLabel, "%" PRId64 ".", integer);
+        lv_label_set_text_fmt(valueLabel, "%" "lld" ".", integer);
       } else {
-        lv_label_set_text_fmt(valueLabel, "%" PRId64 ".%0*" PRId64, integer, minWidth, printRemainder);
+        lv_label_set_text_fmt(valueLabel, "%" "lld" ".%0*" "lld", integer, minWidth, printRemainder);
       }
     } break;
   }

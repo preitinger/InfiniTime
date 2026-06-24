@@ -31,6 +31,8 @@
 #include "displayapp/screens/PassKey.h"
 #include "displayapp/screens/Error.h"
 #include "displayapp/screens/Calculator.h"
+#include "displayapp/screens/ShoppingList.h"
+#include "displayapp/screens/ShoppingListAdmin.h"
 
 #include "drivers/Cst816s.h"
 #include "drivers/St7789.h"
