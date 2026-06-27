@@ -8,6 +8,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "Version.h"
 
 #include <bitset>
 #include <string>
@@ -26,10 +27,12 @@ using namespace Pinetime::Applications::Screens;
 // }
 
 
+#if 1
 static void eventHandler(lv_obj_t* obj, lv_event_t event) {
     auto app = static_cast<ShoppingList*>(obj->user_data);
     app->OnButtonEvent(obj, event);
 }
+#endif
 
 constexpr const char* const tSkip = "SKIP";
 constexpr const char* const tBw = "<";
@@ -50,8 +53,25 @@ using Pinetime::Controllers::FS;
 
 ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory(fs)), doneState(*fileFactory), textWindow()
 {
-    
+    // // Neue Vorschau als nur ein Text mit allen Elementen durch "," getrennt:
+    // lv_obj_t* postview_cont = lv_cont_create(lv_scr_act(), NULL);
+    // const int heightPostview = 25;
+    // lv_obj_set_size(postview_cont, 240, heightPostview);
+    // lv_obj_align(postview_cont, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
+    // lv_cont_set_fit2(postview_cont, LV_FIT_NONE, LV_FIT_NONE);
+
+    // postview = lv_label_create(postview_cont, NULL);
+    // lv_label_set_long_mode(postview, LV_LABEL_LONG_BREAK);
+    // lv_obj_set_width(postview, 220);
+    // // Den automatischen Zeilenumbruch für Fließtext aktivieren
+    // lv_label_set_text(postview, "v1.16.7 Rapsölbutter, Zimt, Ketchup");
+    // // lv_label_set_text(preview, "Aepfel");
+    // lv_obj_set_style_local_text_color(postview, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
+
+
+
     // Wenn vorhanden, `pr::fileExtIn` auspacken:
+#if 1
     pr::splitPacket(*fileFactory);
     fs.FileDelete(pr::fileExtIn);
     doneState.init();
@@ -62,9 +82,14 @@ ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory
         lv_label_set_long_mode(none, LV_LABEL_LONG_BREAK);
         lv_obj_set_size(none, 240, 240);
         lv_obj_align(none, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
-        lv_label_set_text(none, "Keine Einkaufsliste.\nBitte vom Handy\nper BT uebertragen.");
+
+        char s[32];
+        pr::FixedStream ss(s, 32);
+        ss << Pinetime::Version::VersionString() << " - Keine Einkaufsliste.\nBitte vom Handy\nper BT uebertragen.";
+        lv_label_set_text(none, s);
         return;
     }
+#endif
 
     // 0. Post-View
     // Neue Vorschau als nur ein Text mit allen Elementen durch "," getrennt:
@@ -87,7 +112,9 @@ ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory
     // 1. DER RIESEN-BUTTON (Aktuelles Item)
     done_btn = lv_btn_create(lv_scr_act(), NULL);
     done_btn->user_data = this;
+#if 1
     lv_obj_set_event_cb(done_btn, eventHandler);
+#endif
     // lv_obj_set_size(done_btn, 240, 110); // Halbe Bildschirmhöhe
     const lv_coord_t additionalHeightFirst = -30;
     lv_obj_set_size(done_btn, 240, 110 + additionalHeightFirst); // Nicht so hoch
@@ -104,7 +131,9 @@ ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory
     // 2. KONTROLL-BUTTONS (Mittlere Zeile)
     btnRow = lv_btnmatrix_create(lv_scr_act(), nullptr);
     btnRow->user_data = this;
+#if 1
     lv_obj_set_event_cb(btnRow, eventHandler);
+#endif
     lv_obj_align(btnRow, done_btn, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 5);
     lv_btnmatrix_set_map(btnRow, map);
     lv_btnmatrix_set_btn_width(btnRow, 0, 4);
@@ -166,7 +195,22 @@ ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory
     // lv_label_set_text(preview, "Aepfel");
     lv_obj_set_style_local_text_color(preview, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
 
+#if 1
     updateLabels();
+#endif
+
+#if 0
+    {
+        lv_obj_t* versionLabel = lv_label_create(lv_scr_act(), NULL);
+        lv_obj_align(versionLabel, NULL, LV_ALIGN_IN_BOTTOM_LEFT, 0, 0);
+
+        char s[32];
+        pr::FixedStream ss(s, 32);
+        ss << Pinetime::Version::VersionString() << " - Keine Einkaufsliste.\nBitte vom Handy\nper BT uebertragen.";
+
+        lv_label_set_text(versionLabel, s);
+    }
+#endif
 }
 
 ShoppingList::~ShoppingList() {
@@ -175,7 +219,7 @@ ShoppingList::~ShoppingList() {
     log("Ende ~ShoppingList");
 }
 
-
+#if 1
 void ShoppingList::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
     if (event == LV_EVENT_PRESSED) {
         if ((obj == this->done_btn)) {
@@ -255,6 +299,7 @@ void ShoppingList::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
     }
 
 }
+#endif
 
 // class MyStream {
 // private:
@@ -315,6 +360,7 @@ void ShoppingList::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
 //     return s.size();
 // }
 
+#if 1
 static lv_btnmatrix_ctrl_t btnState(bool disabled) {
     return disabled ? LV_BTNMATRIX_CTRL_DISABLED : 0;
 }
@@ -347,15 +393,15 @@ void ShoppingList::updateLabels() {
         skipDisabled = true;
     }
     else {
+        ss << "(";
+        ss << pos + 1;
+        ss << ") ";
         ss << '[';
         if (doneState.isDone()) ss << 'X';
         else if (doneState.isSkipped()) ss << ' ';
         else ss << ' ';
         ss << "] ";
         ss << item;
-        ss << " (";
-        ss << pos + 1;
-        ss << ")";
         lv_btn_set_state(done_btn, LV_BTN_STATE_RELEASED);
     }
 
@@ -398,3 +444,4 @@ void ShoppingList::updateLabels() {
     lv_label_set_text(preview, buf.data());
 
 }
+#endif

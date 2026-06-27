@@ -19,7 +19,7 @@ public:
     void OnButtonEvent(lv_obj_t* obj, lv_event_t event);
 
 private:
-    // Hier deklarierst du deine UI-Objekt-Pointer
+    // // Hier deklarierst du deine UI-Objekt-Pointer
     Pinetime::Controllers::FS& fs;
     pr::IFileFactoryPtr fileFactory;
     lv_obj_t* postview;

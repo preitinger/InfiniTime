@@ -74,7 +74,7 @@ void splitPacket(IFileFactory& factory) {
 }
 
 template <std::size_t N>
-void copyRest(IFilePtr& dst, IFilePtr& src, std::array<char, N> b, const char* nameDst, const char* nameSrc) {
+bool copyRest(IFilePtr& dst, IFilePtr& src, std::array<char, N> b, [[maybe_unused]] const char* nameDst, [[maybe_unused]] const char* nameSrc) {
     int len;
 
     do {
@@ -83,25 +83,26 @@ void copyRest(IFilePtr& dst, IFilePtr& src, std::array<char, N> b, const char* n
         int written = dst->write(b.data(), len);
         if (written != len) {
             log("Konnte nur %d statt %d nach %s schreiben", written, len, nameDst);
-            return;
+            return false;
         }
         log("%d nach %s geschrieben", written, nameDst);
     } while (len == b.size());
+    return true;
 }
 
-void concatPacket(IFileFactory& factory) {
+bool concatPacket(IFileFactory& factory) {
     // Inhalt von fileDone und fileTxt konkateniert nach fileTmp schreiben
     std::array<char, 256> b;
     IFilePtr fdone = factory.open(fileDone, LFS_O_RDONLY);
     if (!fdone) {
         log("Konnte nicht zum Lesen öffnen: %s", fileDone);
-        return;
+        return false;
     }
 
     IFilePtr ftmp = factory.open(fileTmp, LFS_O_WRONLY | LFS_O_TRUNC | LFS_O_CREAT);
     if (!ftmp) {
         log("Konnte nicht zum Schreiben oeffnen: %s", fileTmp);
-        return;
+        return false;
     }
 
     copyRest(ftmp, fdone, b, fileTmp, fileDone);
@@ -109,11 +110,10 @@ void concatPacket(IFileFactory& factory) {
     IFilePtr ftxt = factory.open(fileTxt, LFS_O_RDONLY);
     if (!ftxt) {
         log("Konnte nicht zum Lesen öffnen: %s", fileTxt);
-        return;
+        return false;
     }
 
-    copyRest(ftmp, ftxt, b, fileTmp, fileTxt);
-
+    return copyRest(ftmp, ftxt, b, fileTmp, fileTxt);
 }
 
 

@@ -23,6 +23,7 @@ private:
     Pinetime::Controllers::FS& fs;
     pr::IFileFactoryPtr fileFactory;
     lv_obj_t* buttons;
+    lv_obj_t* result;
 
     void delAndLog(const char* name);
 };

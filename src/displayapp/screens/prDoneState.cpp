@@ -39,7 +39,7 @@ void DoneState::init() {
             log("Falsche Dateigröße von /shoppingList-done.bin: %d statt %d", (int) sizeof(pos) + n, expectedFileLen);
             return;
         }
-        n = file->read(&(_skipped.getBytes()[0]), rawLen);
+        n = file->read(_skipped.getBytes(), rawLen);
         log("n %d", n);
         assert(n == rawLen);
         if (n != rawLen) {

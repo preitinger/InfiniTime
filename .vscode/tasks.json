@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "ninja -j14 pinetime-app",
             "options": {
-                "cwd": "${workspaceFolder}/build"
+                "cwd": "${workspaceFolder}/build_vscode"
             },
             "group": {
                 "kind": "build",

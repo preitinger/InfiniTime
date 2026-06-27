@@ -15,6 +15,6 @@ constexpr int rawLen = (128 + 7) >> 3;
 constexpr int doneFileLen = sizeof(int) + (rawLen << 1);
 
 void splitPacket(IFileFactory& factory);
-void concatPacket(IFileFactory& factory);
+bool concatPacket(IFileFactory& factory);
 
 } // namespace pr

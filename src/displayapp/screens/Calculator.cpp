@@ -6,6 +6,11 @@
 
 using namespace Pinetime::Applications::Screens;
 
+#ifndef PRId64
+#define PRId64 "lld"
+#endif
+
+// ... hier folgt der restliche originale Code der Datei ...
 static void eventHandler(lv_obj_t* obj, lv_event_t event) {
   auto app = static_cast<Calculator*>(obj->user_data);
   app->OnButtonEvent(obj, event);

@@ -26,6 +26,7 @@ using namespace pr;
 //     return l;
 // }
 
+// #define ADMIN
 
 static void eventHandler(lv_obj_t* obj, lv_event_t event) {
     auto app = static_cast<ShoppingListAdmin*>(obj->user_data);
@@ -37,18 +38,25 @@ constexpr const char* const tExtIn = ".ext.in";
 constexpr const char* const tSplit = "SPLIT";
 constexpr const char* const tExtOut = ".ext.out";
 constexpr const char* const tLoop = "LOOP";
+constexpr const char* const tPrepExp = "PREP EXPORT";
 
 static const char* map[] = {
+#ifdef ADMIN
 tDelAll, "\n",
 tExtIn, tSplit, "\n",
 tExtOut, tLoop,
+#else
+tDelAll, tExtIn, "\n",
+tPrepExp,
+#endif
 ""
 };
 
 ShoppingListAdmin::ShoppingListAdmin(Pinetime::Controllers::FS& fs)
     : fs(fs),
     fileFactory(new pr::RealFileFactory(fs)),
-    buttons(nullptr)
+    buttons(nullptr),
+    result(nullptr)
 {
     buttons = lv_btnmatrix_create(lv_scr_act(), nullptr);
     buttons->user_data = this;
@@ -56,8 +64,30 @@ ShoppingListAdmin::ShoppingListAdmin(Pinetime::Controllers::FS& fs)
     lv_obj_align(buttons, nullptr, LV_ALIGN_IN_TOP_MID, 0, 0);
     lv_btnmatrix_set_map(buttons, map);
     // lv_btnmatrix_set_hei
-    lv_obj_set_size(buttons, 220, 240);
+    lv_obj_set_size(buttons, 220, 200);
+    result = lv_label_create(lv_scr_act(), nullptr);
+    lv_label_set_long_mode(result, LV_LABEL_LONG_SROLL);
+    lv_obj_set_size(result, 240, 30);
+    lv_obj_align(result, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
 
+    {
+        lfs_info info;
+        int code = fs.Stat(fileDone, &info);
+        log("code of Stat done: %d", code);
+        bool doneExists = false;
+        if (code >= 0 && info.type == LFS_TYPE_REG) {
+            doneExists = true;
+        }
+        bool txtExists = false;
+        code = fs.Stat(fileTxt, &info);
+        log("code of Stat txt: %d", code);
+        if (code >= 0 && info.type == LFS_TYPE_REG) {
+            txtExists = true;
+        }
+        if (doneExists && txtExists) {
+            lv_label_set_text_static(result, "Liste vorhanden");
+        }
+    }
 }
 
 ShoppingListAdmin::~ShoppingListAdmin() {
@@ -67,7 +97,7 @@ ShoppingListAdmin::~ShoppingListAdmin() {
 }
 
 void ShoppingListAdmin::delAndLog(const char* name) {
-    int code = fs.FileDelete(name);
+    [[maybe_unused]] int code = fs.FileDelete(name);
     log("%s: %d", name, code);
 }
 
@@ -107,7 +137,7 @@ void ShoppingListAdmin::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
                 pr::writeExample(f);
                 f.reset();
                 log("/shoppingList.ext.tmp generiert");
-                int code = fs.Rename(fileExtTmp, fileExtIn);
+                [[maybe_unused]] int code = fs.Rename(fileExtTmp, fileExtIn);
                 log("Rename to /shoppingList.ext.in: %d", code);
             }
             else if (t == tSplit) {
@@ -116,12 +146,46 @@ void ShoppingListAdmin::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
             else if (t == tExtOut) {
                 concatPacket(*fileFactory);
                 log("Paket konkateniert");
-                int code = fs.Rename(fileTmp, fileExtOut);
+                [[maybe_unused]] int code = fs.Rename(fileTmp, fileExtOut);
                 log("Rename %s to %s: %d", fileTmp, fileExtOut, code);
             }
             else if (t == tLoop) {
-                int code = fs.Rename(fileExtOut, fileExtIn);
+                [[maybe_unused]] int code = fs.Rename(fileExtOut, fileExtIn);
                 log("Rename of loop: %d", code);
+            }
+            else if (t == tPrepExp) {
+                bool success = concatPacket(*fileFactory);
+                if (success) {
+                    log("Paket konkateniert");
+                }
+                else {
+                    lv_label_set_text_static(result, "FEHLER!");
+                    return;
+                }
+                [[maybe_unused]] int code = fs.Rename(fileTmp, fileExtOut);
+                log("Rename %s to %s: %d", fileTmp, fileExtOut, code);
+                if (code < 0) {
+                    lv_label_set_text_static(result, "FEHLER!");
+                    return;
+                }
+                code = fs.FileDelete(fileDone);
+                if (code < 0) {
+                    std::array<char, 64> buf;
+                    FixedStream ss(buf.data(), buf.size());
+                    ss << "FEHLER del " << fileDone;
+                    lv_label_set_text(result, buf.data());
+                    return;
+                }
+                code = fs.FileDelete(fileTxt);
+                if (code < 0) {
+                    std::array<char, 64> buf;
+                    FixedStream ss(buf.data(), buf.size());
+                    ss << "FEHLER del " << fileTxt;
+                    lv_label_set_text(result, buf.data());
+                    return;
+                }
+                lv_label_set_text_static(result, "Export erfolgreich vorbereitet.");
+
             }
             break;
         }
