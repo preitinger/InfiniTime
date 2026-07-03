@@ -10,7 +10,7 @@ public:
     RealFile(::Pinetime::Controllers::FS& fs, std::unique_ptr<lfs_file_t>&& file);
     ~RealFile() override;
     int read(void* buff, uint32_t size) override;
-    int write(void* buff, uint32_t size) override;
+    int write(const void* buff, uint32_t size) override;
     void seek(uint32_t pos) override;
 
 private:

@@ -22,9 +22,9 @@ namespace pr {
         return this->fs.FileRead(&file, static_cast<uint8_t*>(buff), size);
     };
 
-    int RealFile::write(void* buff, uint32_t size) {
+    int RealFile::write(const void* buff, uint32_t size) {
         auto& file = *pFile;
-        return this->fs.FileWrite(&file, static_cast<uint8_t*>(buff), size);
+        return this->fs.FileWrite(&file, static_cast<const uint8_t*>(buff), size);
     }
     void RealFile::seek(uint32_t pos) { 
         auto& file = *pFile;

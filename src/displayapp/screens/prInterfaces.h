@@ -9,7 +9,10 @@ class IFile {
 public:
     virtual ~IFile() = default;
     virtual int read(void* buff, uint32_t size) = 0;
-    virtual int write(void* buff, uint32_t size) = 0;
+    /**
+     * write buff[0], ..., buf[size-1] to this file.
+     */
+    virtual int write(const void* buff, uint32_t size) = 0;
     virtual void seek(uint32_t pos) = 0;
 };
 

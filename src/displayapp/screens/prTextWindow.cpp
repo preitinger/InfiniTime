@@ -238,49 +238,4 @@ bool TextWindow::backward() {
 
 }
 
-void TextWindow::swap(int newPos) {
-    int code;
-    if (!file1) return;
-    // LFS_DEBUG("swap newPos %d", newPos);
-    // std::string sRaw(snippet(0, rawSize));
-    // LFS_DEBUG("raw before swap: '%s'", sRaw.c_str());
-    std::string cur(item(newPos));
-    std::string next(item(newPos + 1));
-    // LFS_DEBUG("cur '%s'", cur.c_str());
-    // LFS_DEBUG("next '%s'", next.c_str());
-    if (cur == "" || next == "") {
-        log("TextWindow::swap ignored");
-        return;
-    }
-    // Durch die vorangegangenen Aufrufe von item() und die Tatsache, dass 2 Zeilen garantiert immer kürzer sind als HALF_SIZE, 
-    // ist garantiert, dass nun item(pos) und item(pos+1) komplett in raw liegen.
-    item(newPos); // um offsetPos wieder auf cur zeigen zu lassen.
-    // LFS_DEBUG("offsetPos %d, pos %d", offsetPos, pos);
-    auto destp1 = raw.data() + offsetPos;
-    memcpy(destp1, next.data(), next.size());
-    raw[offsetPos + next.size()] = '\n';
-    auto destp2 = raw.data() + offsetPos + next.size() + 1;
-    memcpy(destp2, cur.data(), cur.size());
-    // LFS_DEBUG("destp1 - raw: %d", (int) (destp1 - raw));
-    // LFS_DEBUG("destp2 - raw: %d", (int)(destp2 - raw));
-    assert(raw[offsetPos + next.size() + 1 + cur.size()] == '\n');
-    raw[offsetPos + next.size() + 1 + cur.size()] = '\n';
-
-    file1->seek(this->offsetRaw + offsetPos);
-    // code = fs.FileSeek(&file, this->offsetRaw + offsetPos);
-    // assert(code >= 0);
-
-    code = file1->write(raw.data() + offsetPos, next.size() + 1 + cur.size());
-    // code = fs.FileWrite(&file, raw + offsetPos, next.size() + 1 + cur.size());
-    assert (code == (int) next.size() + 1 + (int) cur.size());
-    if (code !=(int) next.size() + 1 + (int) cur.size()) {
-        NRF_LOG_ERROR("IFile::write did return %d, but not %d", code, (int) next.size() + 1 + (int) cur.size());
-    }
-
-
-    // sRaw = snippet(0, rawSize);
-    // LFS_DEBUG("raw after swap: '%s'", sRaw.c_str());
-
-}
-
 } // namespace pr

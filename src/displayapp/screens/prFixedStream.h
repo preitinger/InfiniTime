@@ -18,6 +18,7 @@ public:
     FixedStream& operator<<(char c);
     FixedStream& operator<<(std::string_view sv);
     FixedStream& operator<<(int i);
+    FixedStream& appendConverted(std::string_view sv);
     size_t size() const;
     size_t capacity() const { return end >= buf ? end - buf : 0; }
 

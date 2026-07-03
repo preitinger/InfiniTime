@@ -124,27 +124,30 @@ void ShoppingListAdmin::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
                 delAndLog(fileExtTmp);
                 delAndLog(fileExtIn);
                 delAndLog(fileDone);
+                delAndLog(fileAmount);
                 delAndLog(fileTxt);
                 delAndLog(fileTmp);
                 delAndLog(fileExtOut);
+                lv_label_set_text_static(result, "Alles geloescht (auch amount). ");
             }
             else if (t == tExtIn) {
                 auto f = this->fileFactory->open(fileExtTmp, pr::IFileFactory::WRONLY | pr::IFileFactory::TRUNC | pr::IFileFactory::CREAT);
                 if (!f) {
-                    log("Konnte /shoppingList.ext.tmp nicht erzeugen");
+                    log("Konnte %s/ nicht erzeugen", fileExtTmp);
                     return;
                 }
-                pr::writeExample(f);
+                pr::writeExample3(f);
                 f.reset();
-                log("/shoppingList.ext.tmp generiert");
+                log("%s generiert", fileExtTmp);
                 [[maybe_unused]] int code = fs.Rename(fileExtTmp, fileExtIn);
-                log("Rename to /shoppingList.ext.in: %d", code);
+                log("Rename to %s: %d", fileExtIn, code);
+                lv_label_set_text_static(result, "Beispielliste erstellt.");
             }
             else if (t == tSplit) {
-                splitPacket(*fileFactory);
+                splitPacket2(*fileFactory);
             }
             else if (t == tExtOut) {
-                concatPacket(*fileFactory);
+                concatPacket3(*fileFactory);
                 log("Paket konkateniert");
                 [[maybe_unused]] int code = fs.Rename(fileTmp, fileExtOut);
                 log("Rename %s to %s: %d", fileTmp, fileExtOut, code);
@@ -154,7 +157,7 @@ void ShoppingListAdmin::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
                 log("Rename of loop: %d", code);
             }
             else if (t == tPrepExp) {
-                bool success = concatPacket(*fileFactory);
+                bool success = concatPacket3(*fileFactory);
                 if (success) {
                     log("Paket konkateniert");
                 }
@@ -168,11 +171,11 @@ void ShoppingListAdmin::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
                     lv_label_set_text_static(result, "FEHLER!");
                     return;
                 }
-                code = fs.FileDelete(fileDone);
+                code = fs.FileDelete(fileAmount);
                 if (code < 0) {
                     std::array<char, 64> buf;
                     FixedStream ss(buf.data(), buf.size());
-                    ss << "FEHLER del " << fileDone;
+                    ss << "FEHLER del " << fileAmount;
                     lv_label_set_text(result, buf.data());
                     return;
                 }

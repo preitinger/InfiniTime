@@ -32,6 +32,7 @@
 #include "displayapp/screens/Error.h"
 #include "displayapp/screens/Calculator.h"
 #include "displayapp/screens/ShoppingList.h"
+#include "displayapp/screens/ShoppingList2.h"
 #include "displayapp/screens/ShoppingListAdmin.h"
 
 #include "drivers/Cst816s.h"

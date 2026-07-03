@@ -399,8 +399,10 @@ list(APPEND SOURCE_FILES
         displayapp/screens/Styles.cpp
         displayapp/screens/WeatherSymbols.cpp
         displayapp/screens/ShoppingList.cpp
+        displayapp/screens/ShoppingList2.cpp
         displayapp/screens/ShoppingListAdmin.cpp
         displayapp/screens/prDoneState.cpp
+        displayapp/screens/prAmountState.cpp
         displayapp/screens/prTextWindow.cpp
         displayapp/screens/prRealFiles.cpp
         displayapp/screens/prFixedStream.cpp

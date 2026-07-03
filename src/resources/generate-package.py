@@ -50,6 +50,12 @@ def main():
                 path = os.path.join(os.path.dirname(sys.argv[0]), path)
             zf.write(path)
 
+    zf.write(os.path.join(os.path.dirname(sys.argv[0]), "shoppingList.ext.in"), "shoppingList.ext.in");
+    resource_files.append({
+        "filename": "shoppingList.ext.in",
+        "path": "/shoppingList.ext.in"
+    })
+    
     if args.obsolete:
         obsolete_file_path = os.path.join(os.path.dirname(sys.argv[0]), args.obsolete)
         with open(obsolete_file_path, 'r') as fd:

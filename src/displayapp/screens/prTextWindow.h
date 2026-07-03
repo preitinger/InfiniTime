@@ -3,8 +3,14 @@
 #include "displayapp/Controllers.h"
 
 #include "prInterfaces.h"
+#include "prLog.h"
+#include "prUtils.h"
+
+#include "nrf_log.h"
 
 #include <string_view>
+#include <cassert>
+#include <cstring>
 
 
 namespace pr {
@@ -52,7 +58,79 @@ public:
      * Sonst, wird die aktuelle Zeile newPos mit der folgenden vertauscht und
      * dieses Objekt als dirty markiert.
      */
-    void swap(int newPos);
+    template<size_t N>
+    void swap(int newPos, std::array<char, N>& buf);
 };
+
+// template implementation
+
+template <size_t N>
+void TextWindow::swap(int newPos, std::array<char, N>& buf) {
+    int code;
+    if (!file1) return;
+    // LFS_DEBUG("swap newPos %d", newPos);
+    // std::string sRaw(snippet(0, rawSize));
+    // LFS_DEBUG("raw before swap: '%s'", sRaw.c_str());
+    size_t curSizeNetto, nextSizeNetto;
+    char* curP;
+    char* nextP;
+    {
+        std::string_view cur(item(newPos));
+        if (cur.empty()) {
+            log("TextWindow::swap ignored");
+            return;
+        }
+        curSizeNetto = cur.size();
+        memcpy(curP = buf.data(), cur.data(), curSizeNetto);
+    }
+    {
+        std::string_view next(item(newPos + 1));
+        if (next.empty()) {
+            log("TextWindow::swap ignored");
+            return;
+        }
+        nextSizeNetto = next.size();
+        memcpy((nextP = buf.data() + curSizeNetto), next.data(), nextSizeNetto);
+    }
+
+    // Durch die vorangegangenen Aufrufe von item() und die Tatsache, dass 2 Zeilen garantiert immer kürzer sind als HALF_SIZE, 
+    // ist garantiert, dass nun item(pos) und item(pos+1) komplett in raw liegen.
+    item(newPos); // um offsetPos wieder auf cur zeigen zu lassen.
+    // LFS_DEBUG("offsetPos %d, pos %d", offsetPos, pos);
+    auto destp1 = raw.data() + offsetPos;
+    memcpy(destp1, nextP, nextSizeNetto);
+    destp1[nextSizeNetto] = '\n';
+    auto destp2 = raw.data() + offsetPos + nextSizeNetto + 1;
+    memcpy(destp2, curP, curSizeNetto);
+    assert(destp2[curSizeNetto] == '\n');
+    // LFS_DEBUG("destp1 - raw: %d", (int) (destp1 - raw));
+    // LFS_DEBUG("destp2 - raw: %d", (int)(destp2 - raw));
+    assert(raw[offsetPos + nextSizeNetto] == '\n');
+    assert(raw[offsetPos + nextSizeNetto + 1 + curSizeNetto] == '\n');
+
+    file1->seek(this->offsetRaw + offsetPos);
+    // code = fs.FileSeek(&file, this->offsetRaw + offsetPos);
+    // assert(code >= 0);
+
+    assert(rawSize <= SIZE);
+    assert(offsetPos + nextSizeNetto + 1 + curSizeNetto <= rawSize);
+
+    log("Going to write '%.*s' to file at %d",
+        //  SVL(snippet(offsetPos, offsetPos + nextSizeNetto + 1 + curSizeNetto)),
+        //  SVD(snippet(offsetPos, offsetPos + nextSizeNetto + 1 + curSizeNetto)), 
+        SV_ARGS(snippet(offsetPos, offsetPos + nextSizeNetto + 1 + curSizeNetto)),
+        offsetRaw + offsetPos);
+    code = file1->write(raw.data() + offsetPos, nextSizeNetto + 1 + curSizeNetto);
+    // code = fs.FileWrite(&file, raw + offsetPos, next.size() + 1 + cur.size());
+    assert(code == (int)nextSizeNetto + 1 + curSizeNetto);
+    if (code != (int)nextSizeNetto + 1 + (int)curSizeNetto) {
+        NRF_LOG_ERROR("IFile::write did return %d, but not %d", code, (int)nextSizeNetto + 1 + (int)curSizeNetto);
+    }
+
+
+    // sRaw = snippet(0, rawSize);
+    // LFS_DEBUG("raw after swap: '%s'", sRaw.c_str());
+
+}
 
 } // namespace pr

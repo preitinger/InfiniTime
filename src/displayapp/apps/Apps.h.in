@@ -46,6 +46,7 @@ namespace Pinetime {
       SettingBluetooth,
       SettingOTA,
       ShoppingList,
+      ShoppingList2,
       ShoppingListAdmin,
       Error
     };

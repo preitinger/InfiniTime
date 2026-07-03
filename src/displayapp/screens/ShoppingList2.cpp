@@ -1,6 +1,6 @@
-#include "displayapp/screens/ShoppingList.h"
+#include "displayapp/screens/ShoppingList2.h"
 #include "components/fs/FS.h"
-
+#include "displayapp/screens/prAmountState.h"
 #include "prUtils.h"
 #include "prLog.h"
 #include "prRealFiles.h"
@@ -16,7 +16,34 @@
 
 #include <displayapp/screens/prLog.h>
 
+// extern "C" {
+//     // extern lv_font_t jetbrains_mono_24;
+//     extern lv_font_t jetbrains_mono_bold_20;
+// }
+
 using namespace Pinetime::Applications::Screens;
+
+void labelBgColor(lv_obj_t* label, uint8_t red, uint8_t green, uint8_t blue) {
+    // 1. Hintergrund deckend machen (0 = transparent, 255 = komplett deckend)
+    lv_obj_set_style_local_bg_opa(label, LV_LABEL_PART_MAIN, 0, LV_OPA_COVER);
+
+    // 2. Hintergrundfarbe setzen (z. B. Rot)
+    auto color = LV_COLOR_MAKE(red, green, blue);
+    lv_obj_set_style_local_bg_color(label, LV_LABEL_PART_MAIN, 0, color);
+}
+
+void labelTextColor(lv_obj_t* label, uint8_t red, uint8_t green, uint8_t blue) {
+    auto color = LV_COLOR_MAKE(red, green, blue);
+    lv_obj_set_style_local_text_color(label, LV_BTN_PART_MAIN, 0, color);
+}
+
+void buttonmatrixBgColor(lv_obj_t* matrix, uint8_t red, uint8_t green, uint8_t blue) {
+
+    lv_obj_set_style_local_bg_opa(matrix, LV_BTNMATRIX_PART_BTN, 0, LV_OPA_COVER);
+    auto color = LV_COLOR_MAKE(red, green, blue);
+    lv_obj_set_style_local_bg_color(matrix, LV_BTNMATRIX_PART_BTN, 0, color);
+
+}
 
 // static lv_obj_t* preview_label(lv_obj_t* parent, const char* text) {
 //     lv_obj_t* l = lv_label_create(parent, NULL);
@@ -29,17 +56,25 @@ using namespace Pinetime::Applications::Screens;
 
 #if 1
 static void eventHandler(lv_obj_t* obj, lv_event_t event) {
-    auto app = static_cast<ShoppingList*>(obj->user_data);
+    auto app = static_cast<ShoppingList2*>(obj->user_data);
     app->OnButtonEvent(obj, event);
 }
 #endif
 
-constexpr const char* const tSkip = "SKIP";
+constexpr const char* const tMod = "MOD";
 constexpr const char* const tBw = "<";
 constexpr const char* const tFw = ">";
 constexpr const char* const tMvBw = "<-";
 constexpr const char* const tMvFw = "->";
-static const char* map[] = { tSkip, tBw, tFw, tMvBw, tMvFw, "" };
+// static const char* map[] = { tBw, tFw, tMvBw, tMvFw, "" };
+static const char* mapMod0[] = { tBw, tMod, tFw, "" };
+static const char* mapMod1[] = { tMvBw, tMod, tMvFw, "" };
+
+constexpr int numModes = 2;
+static const char** modeMaps[] = {
+    mapMod0,
+    mapMod1
+};
 
 using Pinetime::Controllers::FS;
 
@@ -51,7 +86,7 @@ using Pinetime::Controllers::FS;
 //     return code >= 0;
 // }
 
-ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory(fs)), doneState(*fileFactory), textWindow()
+ShoppingList2::ShoppingList2(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory(fs)), amountState(*fileFactory), textWindow(), mode(0)
 {
     // // Neue Vorschau als nur ein Text mit allen Elementen durch "," getrennt:
     // lv_obj_t* postview_cont = lv_cont_create(lv_scr_act(), NULL);
@@ -72,27 +107,44 @@ ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory
 
     // Wenn vorhanden, `pr::fileExtIn` auspacken:
 #if 1
-    pr::splitPacket(*fileFactory);
+    pr::splitPacket3(*fileFactory);
     fs.FileDelete(pr::fileExtIn);
-    doneState.init();
+    amountState.init();
     textWindow.init(*fileFactory);
 
-    if (!(doneState.fileExists() && textWindow.isFileOpen())) {
+    if (!(amountState.fileExists() && textWindow.isFileOpen())) {
         lv_obj_t* none = lv_label_create(lv_scr_act(), nullptr);
         lv_label_set_long_mode(none, LV_LABEL_LONG_BREAK);
         lv_obj_set_size(none, 240, 240);
-        lv_obj_align(none, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
 
-        char s[32];
-        pr::FixedStream ss(s, 32);
-        ss << Pinetime::Version::VersionString() << " - Keine Einkaufsliste.\nBitte vom Handy\nper BT uebertragen.";
-        lv_label_set_text(none, s);
+        std::array<char, 128> s;
+        pr::FixedStream ss(s.data(), s.size());
+        ss << Pinetime::Version::VersionString() << "\nKeine Einkaufsliste.\nBitte vom Handy per\nBT uebertragen.";
+        lv_label_set_text(none, s.data());
+        lv_obj_align(none, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
         return;
     }
 #endif
 
     // 0. Post-View
     // Neue Vorschau als nur ein Text mit allen Elementen durch "," getrennt:
+#if 1
+    postview = lv_label_create(lv_scr_act(), NULL);
+    labelTextColor(postview, 0xff, 0xf5, 0x70);
+    // {
+    //     // 1. Hintergrund deckend machen (0 = transparent, 255 = komplett deckend)
+    //     lv_obj_set_style_local_bg_opa(postview, LV_LABEL_PART_MAIN, 0, LV_OPA_COVER);
+
+    //     // 2. Hintergrundfarbe setzen (z. B. Rot)
+    //     auto color = LV_COLOR_MAKE(0xdd, 0xd0, 0x17);
+    //     lv_obj_set_style_local_bg_color(postview, LV_LABEL_PART_MAIN, 0, color);
+
+    // }
+    lv_label_set_long_mode(postview, LV_LABEL_LONG_BREAK);
+    // lv_obj_set_width(postview, 240);
+    const int heightPostview = 25;
+    lv_obj_set_size(postview, 240, heightPostview);
+#else
     lv_obj_t* postview_cont = lv_cont_create(lv_scr_act(), NULL);
     const int heightPostview = 25;
     lv_obj_set_size(postview_cont, 240, heightPostview);
@@ -102,46 +154,49 @@ ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory
 
     postview = lv_label_create(postview_cont, NULL);
     lv_label_set_long_mode(postview, LV_LABEL_LONG_BREAK);
-    lv_obj_set_width(postview, 220);
+    lv_obj_set_width(postview, 240);
     // Den automatischen Zeilenumbruch für Fließtext aktivieren
     lv_label_set_text(postview, "Bla, Aepfel, Birnen, Rapsölbutter, Zimt, Ketchup");
     // lv_label_set_text(preview, "Aepfel");
     lv_obj_set_style_local_text_color(postview, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-
+#endif
 
     // 1. DER RIESEN-BUTTON (Aktuelles Item)
     done_btn = lv_btn_create(lv_scr_act(), NULL);
+    lv_obj_set_style_local_radius(done_btn, LV_BTN_PART_MAIN, LV_BTN_STATE_RELEASED, 0);
+    // {
+    //     // 1. Hintergrund deckend machen (0 = transparent, 255 = komplett deckend)
+    //     lv_obj_set_style_local_bg_opa(done_btn, LV_BTN_PART_MAIN, 0, LV_OPA_COVER);
+
+    //     // 2. Hintergrundfarbe setzen (z. B. Rot)
+    //     auto color = LV_COLOR_MAKE(0x58, 0xba, 0x3e);
+    //     lv_obj_set_style_local_bg_color(done_btn, LV_LABEL_PART_MAIN, 0, color);
+
+    // }
     done_btn->user_data = this;
 #if 1
     lv_obj_set_event_cb(done_btn, eventHandler);
 #endif
     // lv_obj_set_size(done_btn, 240, 110); // Halbe Bildschirmhöhe
     const lv_coord_t additionalHeightFirst = -30;
-    lv_obj_set_size(done_btn, 240, 110 + additionalHeightFirst); // Nicht so hoch
+    int heightDone = 110 + additionalHeightFirst;
+    lv_obj_set_size(done_btn, 240, heightDone - 1); // Nicht so hoch
+#if 1
+#else
     lv_obj_align(done_btn, postview_cont, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
+#endif
 
     // Text im Riesen-Button zentrieren
     done_label = lv_label_create(done_btn, NULL);
+    labelBgColor(done_btn, 20, 20, 20);
+    labelTextColor(done_label, 0x80, 0xff, 0x5d);
     lv_label_set_text(done_label, "Bananen");
     // Textumbruch aktivieren, falls das Wort zu lang ist
     lv_label_set_long_mode(done_label, LV_LABEL_LONG_BREAK);
     lv_obj_set_width(done_label, 220);
     lv_obj_align(done_label, NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align(done_btn, postview, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
 
-    // 2. KONTROLL-BUTTONS (Mittlere Zeile)
-    btnRow = lv_btnmatrix_create(lv_scr_act(), nullptr);
-    btnRow->user_data = this;
-#if 1
-    lv_obj_set_event_cb(btnRow, eventHandler);
-#endif
-    lv_obj_align(btnRow, done_btn, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 5);
-    lv_btnmatrix_set_map(btnRow, map);
-    lv_btnmatrix_set_btn_width(btnRow, 0, 4);
-    lv_btnmatrix_set_btn_width(btnRow, 1, 2);
-    lv_btnmatrix_set_btn_width(btnRow, 2, 2);
-    lv_btnmatrix_set_btn_width(btnRow, 3, 2);
-    lv_btnmatrix_set_btn_width(btnRow, 4, 2);
-    lv_obj_set_size(btnRow, 240, 40);
     // // Skip-Button (Links)
     // this->skip_btn = lv_btn_create(btnRow, NULL);
     // skip_btn->user_data = this;
@@ -181,6 +236,14 @@ ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory
     // // ENDE KI
 
     // Neue Vorschau als nur ein Text mit allen Elementen durch "," getrennt:
+#if 1
+    preview = lv_label_create(lv_scr_act(), NULL);
+    int heightPreview = 80 - additionalHeightFirst - heightPostview;
+    lv_label_set_long_mode(preview, LV_LABEL_LONG_BREAK);
+    log("heightPreview %d", heightPreview);
+    lv_obj_set_size(preview, 240, heightPreview);
+    lv_obj_align(preview, done_btn, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
+#else
     lv_obj_t* preview_cont = lv_cont_create(lv_scr_act(), NULL);
     lv_obj_set_size(preview_cont, 240, 75 - additionalHeightFirst - heightPostview);
     lv_obj_align(preview_cont, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
@@ -194,6 +257,49 @@ ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory
     lv_label_set_text(preview, "Bla, Aepfel, Birnen, Rapsölbutter, Zimt, Ketchup");
     // lv_label_set_text(preview, "Aepfel");
     lv_obj_set_style_local_text_color(preview, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
+#endif
+
+    // 2. KONTROLL-BUTTONS (Mittlere Zeile)
+    btnRow = lv_btnmatrix_create(lv_scr_act(), nullptr);
+    btnRow->user_data = this;
+#if 1
+    lv_obj_set_event_cb(btnRow, eventHandler);
+#endif
+    lv_btnmatrix_set_map(btnRow, modeMaps[mode]);
+    // width and others will be set in updateLabels():
+    // lv_btnmatrix_set_btn_width(btnRow, 0, 3);
+    // lv_btnmatrix_set_btn_width(btnRow, 1, 3);
+    // lv_btnmatrix_set_btn_width(btnRow, 2, 3);
+    // lv_btnmatrix_set_btn_width(btnRow, 3, 3);
+    {
+        // buttonmatrixColor(btnRow, 255, 0, 0);
+        buttonmatrixBgColor(btnRow, 20, 20, 20);
+    }
+    int heightBtnRow = 76;
+    lv_obj_set_size(btnRow, 240, heightBtnRow);
+    {
+        static lv_style_t matrix_style;
+        lv_style_init(&matrix_style);
+
+        // Setzt den inneren Button-Abstand auf 5 Pixel
+        lv_style_set_pad_left(&matrix_style, LV_STATE_DEFAULT, 0);
+        lv_style_set_pad_right(&matrix_style, LV_STATE_DEFAULT, 0);
+        lv_style_set_pad_top(&matrix_style, LV_STATE_DEFAULT, 0);
+        lv_style_set_pad_bottom(&matrix_style, LV_STATE_DEFAULT, 0);
+        lv_style_set_pad_hor(&matrix_style, LV_STATE_DEFAULT, 1);
+        lv_obj_add_style(btnRow, LV_BTNMATRIX_PART_BG, &matrix_style);
+    }
+    {
+        static lv_style_t matrix_style;
+        lv_style_init(&matrix_style);
+
+        lv_style_set_radius(&matrix_style, LV_STATE_DEFAULT, 0);
+        lv_obj_add_style(btnRow, LV_BTNMATRIX_PART_BTN, &matrix_style);
+
+    }
+    lv_obj_align(btnRow, lv_scr_act(), LV_ALIGN_IN_BOTTOM_LEFT, 0, 0);
+
+    // log("heightPostview %d, heightDone %d, heightBtnRow %d, heightPreview %d, sum of heights %d", heightPostview, heightDone, heightBtnRow, heightPreview, heightPostview + heightDone + heightBtnRow + heightPreview);
 
 #if 1
     updateLabels();
@@ -213,19 +319,25 @@ ShoppingList::ShoppingList(FS& fs) : fs(fs), fileFactory(new pr::RealFileFactory
 #endif
 }
 
-ShoppingList::~ShoppingList() {
+ShoppingList2::~ShoppingList2() {
     // LVGL aufräumen, wenn der User die App über den physischen Button verlässt
     lv_obj_clean(lv_scr_act());
-    log("Ende ~ShoppingList");
+    log("Ende ~ShoppingList2");
 }
 
 #if 1
-void ShoppingList::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
-    if (event == LV_EVENT_PRESSED) {
+void ShoppingList2::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
+    if (event == LV_EVENT_SHORT_CLICKED) {
         if ((obj == this->done_btn)) {
             LFS_WARN("done clicked");
-            if (!textWindow.item(doneState.pos()).empty()) {
-                doneState.done();
+            uint32_t amount = amountState.getAmount();
+            if (!textWindow.item(amountState.pos()).empty()) {
+                if (amount > 0) {
+                    amountState.setAmount(amount - 1);
+                }
+                else {
+                    amountState.nextPos();
+                }
                 updateLabels();
             }
             else {
@@ -235,21 +347,10 @@ void ShoppingList::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
         else if (obj == btnRow) {
             log("click on btnRow");
             const char* t = lv_btnmatrix_get_active_btn_text(btnRow);
-            if (t == tSkip) {
-                LFS_WARN("skip clicked");
-                if (!textWindow.item(doneState.pos()).empty()) {
-                    doneState.skip();
-                    updateLabels();
-                }
-                else {
-                    LFS_WARN("skip ignored");
-                }
-
-            }
-            else if (t == tBw) {
+            if (t == tBw) {
                 LFS_WARN("< clicked");
-                if (doneState.pos() > 0) {
-                    doneState.undo();
+                if (amountState.pos() > 0) {
+                    amountState.prevPos();
                     updateLabels();
                 }
                 else {
@@ -258,42 +359,55 @@ void ShoppingList::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
             }
             else if (t == tFw) {
                 log("> clicked");
-                int pos = doneState.pos();
+                int pos = amountState.pos();
                 std::string_view next = textWindow.item(pos);
                 if (next.empty()) {
                     log("> ignored");
                     return;
                 }
-                if (doneState.isDone()) {
-                    doneState.done();
-                }
-                else {
-                    doneState.skip();
-                }
+                amountState.nextPos();
                 updateLabels();
             }
             else if (t == tMvFw) {
                 LFS_WARN("-> clicked");
-                int pos = doneState.pos();
+                int pos = amountState.pos();
                 std::string_view next = textWindow.item(pos + 1);
                 if (next.empty()) {
                     LFS_WARN("-> ignored");
                     return;
                 }
                 textWindow.swap(pos, buf);
-                doneState.forward();
+                amountState.forward();
                 updateLabels();
             }
             else if (t == tMvBw) {
                 LFS_WARN("<- clicked");
-                int pos = doneState.pos();
+                int pos = amountState.pos();
                 if (pos < 1 || textWindow.item(pos).empty()) {
                     LFS_WARN("<- ignored");
                     return;
                 }
                 textWindow.swap(pos - 1, buf);
-                doneState.backward();
+                amountState.backward();
                 updateLabels();
+            }
+            else if (t == tMod) {
+                this->mode = (this->mode + 1) % numModes;
+                lv_btnmatrix_set_map(btnRow, modeMaps[mode]);
+                updateLabels();
+            }
+        }
+    }
+    else if (event == LV_EVENT_LONG_PRESSED) {
+        if ((obj == this->done_btn)) {
+            LFS_WARN("done long pressed");
+            uint32_t amount = amountState.getAmount();
+            if (!textWindow.item(amountState.pos()).empty()) {
+                amountState.setAmount(amount + 1);
+                updateLabels();
+            }
+            else {
+                LFS_WARN("done long press ignored");
             }
         }
     }
@@ -361,12 +475,44 @@ void ShoppingList::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
 // }
 
 #if 1
-static lv_btnmatrix_ctrl_t btnState(bool disabled) {
-    return disabled ? LV_BTNMATRIX_CTRL_DISABLED : 0;
+static lv_btnmatrix_ctrl_t btnState(bool disabled, int width = 0) {
+    return static_cast<lv_btnmatrix_ctrl_t>((disabled ? LV_BTNMATRIX_CTRL_DISABLED : 0) | width);
 }
 
-void ShoppingList::updateLabels() {
-    auto pos = doneState.pos();
+static pr::FixedStream& formatItem(pr::FixedStream& ss, std::string_view item) {
+    // log("item '%.*s'", (int)item.length(), item.data());
+    auto begin = item.begin();
+    auto end = begin;
+    while (end != item.end() && *end != '\t') ++end;
+    // log("name: end - begin = %d", (int)(end - begin));
+    std::string_view name(begin, end);
+    begin = end;
+    if (begin != item.end()) ++begin;
+    end = begin;
+    while (end != item.end() && *end != '\t') ++end;
+    std::string_view unit(begin, end);
+    begin = end;
+    if (begin != item.end()) ++begin;
+    end = begin;
+    while (end != item.end() && *end != '\t') ++end;
+    std::string_view comment(begin, end);
+    // log("name '%.*s'", (int)name.length(), name.data());
+    // log("unit '%.*s'", (int)unit.length(), unit.data());
+    // log("comment '%.*s'", (int)comment.length(), comment.data());
+    ss << unit;
+    // log("name.length=%d", (int)name.length());
+    ss << ' ';
+    // log("name '%.*s'", (int)name.length(), name.data());
+    ss.appendConverted(name);
+    if (comment.length() > 0) {
+        ss << ' ' << comment;
+    }
+
+    return ss;
+}
+
+void ShoppingList2::updateLabels() {
+    auto pos = amountState.pos();
     LFS_WARN("pos %d", pos);
     {
         const int n = 1;
@@ -377,34 +523,32 @@ void ShoppingList::updateLabels() {
             if (i != postviewBegin) {
                 ss << ", ";
             }
-            ss << (doneState.isDone(i) ? 'X' : '_');
-            ss << ' ';
-            ss << textWindow.item(i);
+            ss << (int)amountState.getAmount(i) << "x";
+            formatItem(ss, textWindow.item(i));
         }
         lv_label_set_text(postview, this->buf.data());
     }
-    std::string item(textWindow.item(pos));
-    bool skipDisabled = false, bwDisabled = false, fwDisabled = false, mvBwDisabled = false, mvFwDisabled = false;
+    std::string_view item(textWindow.item(pos));
+    bool bwDisabled = false, fwDisabled = false, mvBwDisabled = false, mvFwDisabled = false;
     pr::FixedStream ss(buf.data(), buf.size());
     if (item.empty()) {
         ss << "Fertig!";
         lv_btn_set_state(done_btn, LV_BTN_STATE_DISABLED);
         fwDisabled = true;
-        skipDisabled = true;
     }
     else {
         ss << "(";
         ss << pos + 1;
         ss << ") ";
-        ss << '[';
-        if (doneState.isDone()) ss << 'X';
-        else if (doneState.isSkipped()) ss << ' ';
-        else ss << ' ';
-        ss << "] ";
-        ss << item;
+        ss << (int)amountState.getAmount() << "x";
+        formatItem(ss, item);
+
+        // // std::string_view unit
+        // ss << item;
         lv_btn_set_state(done_btn, LV_BTN_STATE_RELEASED);
     }
 
+    lv_label_set_text(done_label, buf.data());
 
     if (pos < 1) {
         bwDisabled = true;
@@ -418,15 +562,25 @@ void ShoppingList::updateLabels() {
         mvFwDisabled = true;
     }
 
-    lv_btnmatrix_ctrl_t btnRowCtrls[] = { btnState(skipDisabled), btnState(bwDisabled), btnState(fwDisabled), btnState(mvBwDisabled), btnState(mvFwDisabled) };
-    lv_btnmatrix_set_ctrl_map(btnRow, btnRowCtrls);
-    lv_btnmatrix_set_btn_width(btnRow, 0, 4);
-    lv_btnmatrix_set_btn_width(btnRow, 1, 2);
-    lv_btnmatrix_set_btn_width(btnRow, 2, 2);
-    lv_btnmatrix_set_btn_width(btnRow, 3, 2);
-    lv_btnmatrix_set_btn_width(btnRow, 4, 2);
+    switch (mode) {
+    case 0: {
+        lv_btnmatrix_ctrl_t btnRowCtrls[] = { btnState(bwDisabled, 1), btnState(false, 1), btnState(fwDisabled, 1) };
+        lv_btnmatrix_set_ctrl_map(btnRow, btnRowCtrls);
+        break;
+    }
+    case 1: {
+        lv_btnmatrix_ctrl_t btnRowCtrls[] = { btnState(mvBwDisabled, 1), btnState(false, 1), btnState(mvFwDisabled, 1) };
+        lv_btnmatrix_set_ctrl_map(btnRow, btnRowCtrls);
+        break;
+    }
+    } // switch
 
-    lv_label_set_text(done_label, buf.data());
+// lv_btnmatrix_set_btn_width(btnRow, 0, 3);
+// lv_btnmatrix_set_btn_width(btnRow, 1, 3);
+// lv_btnmatrix_set_btn_width(btnRow, 2, 3);
+// lv_btnmatrix_set_btn_width(btnRow, 3, 3);
+    lv_btnmatrix_set_align(btnRow, LV_LABEL_ALIGN_LEFT);
+
     ss.clear();
     for (int i = pos + 1; ss.size() < 18 * 4 && item != ""; ++i) {
         if (i > pos + 1) {
@@ -434,9 +588,8 @@ void ShoppingList::updateLabels() {
         }
         item = textWindow.item(i);
         if (item != "") {
-            ss << (doneState.isDone(i) ? 'X' : '_');
-            ss << ' ';
-            ss << item;
+            ss << (int)amountState.getAmount(i) << "x";
+            formatItem(ss, item);
         }
     }
 

@@ -15,8 +15,8 @@
             "visibility": "hidden"
         }
     },
-    "cmake.generator": "Unix Makefiles",
-    "clang-tidy.buildPath": "build/compile_commands.json",
+    "cmake.generator": "Ninja",
+    "clang-tidy.buildPath": "build_vscode/compile_commands.json",
     "files.associations": {
         "array": "cpp",
         "atomic": "cpp",
