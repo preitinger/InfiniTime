@@ -1,8 +1,8 @@
-#include "prUtils.h"
-#include "prTextWindow.h"
-#include "prValidation.h"
+#include "prUtils.hpp"
+#include "prTextWindow.hpp"
+#include "prValidation.hpp"
 #include "components/fs/FS.h"
-#include "prLog.h"
+#include "prLog.hpp"
 #include "nrf_log.h"
 
 

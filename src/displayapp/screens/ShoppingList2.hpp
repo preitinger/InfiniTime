@@ -1,7 +1,7 @@
 #pragma once
-#include "prInterfaces.h"
-#include "prTextWindow.h"
-#include "prAmountState.h"
+#include "prInterfaces.hpp"
+#include "prTextWindow.hpp"
+#include "prAmountState.hpp"
 #include "displayapp/apps/Apps.h"
 #include "displayapp/screens/Screen.h"
 #include "displayapp/Controllers.h"
@@ -26,7 +26,7 @@ private:
     lv_obj_t* btnRow;
     lv_obj_t *done_label;
     lv_obj_t* preview;
-    std::array<char, 72> buf;
+    std::array<char, pr::HALF_SIZE> buf;
     pr::AmountState amountState;
     pr::TextWindow textWindow;
     int mode;

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "prInterfaces.h"
-#include "prTextWindow.h"
-#include "prDoneState.h"
+#include "prInterfaces.hpp"
+#include "prTextWindow.hpp"
+#include "prDoneState.hpp"
 #include "displayapp/apps/Apps.h"
 #include "displayapp/screens/Screen.h"
 #include "displayapp/Controllers.h"

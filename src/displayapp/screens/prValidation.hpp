@@ -1,6 +1,6 @@
 #pragma once
-#include "prInterfaces.h"
-#include "prFixedStream.h"
+#include "prInterfaces.hpp"
+#include "prFixedStream.hpp"
 
 namespace pr {
 

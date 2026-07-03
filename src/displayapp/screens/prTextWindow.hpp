@@ -2,9 +2,9 @@
 
 #include "displayapp/Controllers.h"
 
-#include "prInterfaces.h"
-#include "prLog.h"
-#include "prUtils.h"
+#include "prInterfaces.hpp"
+#include "prLog.hpp"
+#include "prUtils.hpp"
 
 #include "nrf_log.h"
 
@@ -34,7 +34,7 @@ private:
      */
     int pos;
     /**
-     * Der erste Zeichen des Textes des Items mit Index pos ist: raw[offsetPos]
+     * Das erste Zeichen des Textes des Items mit Index pos ist: raw[offsetPos]
      */
     int offsetPos;
     bool dirty;
@@ -59,15 +59,16 @@ public:
      * dieses Objekt als dirty markiert.
      */
     template<size_t N>
-    void swap(int newPos, std::array<char, N>& buf);
+    SwapData swap(int newPos, std::array<char, N>& buf);
 };
 
 // template implementation
 
 template <size_t N>
-void TextWindow::swap(int newPos, std::array<char, N>& buf) {
+SwapData TextWindow::swap(int newPos, std::array<char, N>& buf) {
     int code;
-    if (!file1) return;
+    assert(N >= HALF_SIZE);
+    if (!file1) return { -1, -1, -1, -1 };
     // LFS_DEBUG("swap newPos %d", newPos);
     // std::string sRaw(snippet(0, rawSize));
     // LFS_DEBUG("raw before swap: '%s'", sRaw.c_str());
@@ -78,18 +79,20 @@ void TextWindow::swap(int newPos, std::array<char, N>& buf) {
         std::string_view cur(item(newPos));
         if (cur.empty()) {
             log("TextWindow::swap ignored");
-            return;
+            return { -1, -1, -1, -1 };
         }
         curSizeNetto = cur.size();
+        assert(curSizeNetto + 1 <= HALF_SIZE / 2);
         memcpy(curP = buf.data(), cur.data(), curSizeNetto);
     }
     {
         std::string_view next(item(newPos + 1));
         if (next.empty()) {
             log("TextWindow::swap ignored");
-            return;
+            return { -1, -1, -1, -1 };
         }
         nextSizeNetto = next.size();
+        assert(nextSizeNetto + 1 <= HALF_SIZE / 2);
         memcpy((nextP = buf.data() + curSizeNetto), next.data(), nextSizeNetto);
     }
 
@@ -131,6 +134,12 @@ void TextWindow::swap(int newPos, std::array<char, N>& buf) {
     // sRaw = snippet(0, rawSize);
     // LFS_DEBUG("raw after swap: '%s'", sRaw.c_str());
 
+    return {
+        newPos,
+        offsetRaw + offsetPos,
+        offsetRaw + offsetPos + (int) curSizeNetto + 1,
+        offsetRaw + offsetPos + (int) curSizeNetto + 1 + (int) nextSizeNetto + 1,
+    };
 }
 
 } // namespace pr

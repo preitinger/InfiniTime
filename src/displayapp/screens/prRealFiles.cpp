@@ -1,5 +1,5 @@
-#include "prRealFiles.h"
-#include "prLog.h"
+#include "prRealFiles.hpp"
+#include "prLog.hpp"
 
 #include <memory>
 

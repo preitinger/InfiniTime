@@ -1,10 +1,11 @@
-#include "displayapp/screens/ShoppingList2.h"
+#include "displayapp/screens/ShoppingList2.hpp"
 #include "components/fs/FS.h"
-#include "displayapp/screens/prAmountState.h"
-#include "prUtils.h"
-#include "prLog.h"
-#include "prRealFiles.h"
-#include "prFixedStream.h"
+#include "displayapp/screens/prAmountState.hpp"
+#include "prUtils.hpp"
+#include "prLog.hpp"
+#include "prRealFiles.hpp"
+#include "prFixedStream.hpp"
+#include "prLog.hpp"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -14,7 +15,6 @@
 #include <string>
 #include <sstream>
 
-#include <displayapp/screens/prLog.h>
 
 // extern "C" {
 //     // extern lv_font_t jetbrains_mono_24;

@@ -1,20 +1,21 @@
-#include "displayapp/screens/ShoppingList.h"
+#include "displayapp/screens/ShoppingList.hpp"
 #include "components/fs/FS.h"
 
-#include "prUtils.h"
-#include "prLog.h"
-#include "prRealFiles.h"
-#include "prFixedStream.h"
+#include "prUtils.hpp"
+#include "prLog.hpp"
+#include "prRealFiles.hpp"
+#include "prFixedStream.hpp"
 
 #include "FreeRTOS.h"
 #include "task.h"
 #include "Version.h"
 
+#include <algorithm>
 #include <bitset>
 #include <string>
 #include <sstream>
 
-#include <displayapp/screens/prLog.h>
+#include "prLog.hpp"
 
 using namespace Pinetime::Applications::Screens;
 

@@ -1,6 +1,6 @@
-#include "prUtils.h"
-#include "prLog.h"
-#include "prDoneState.h"
+#include "prUtils.hpp"
+#include "prLog.hpp"
+#include "prDoneState.hpp"
 #include "displayapp/Controllers.h"
 #include "components/fs/FS.h"
 

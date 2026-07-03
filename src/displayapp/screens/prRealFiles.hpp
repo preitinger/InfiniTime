@@ -1,6 +1,6 @@
 #pragma once
 
-#include "prInterfaces.h"
+#include "prInterfaces.hpp"
 #include "components/fs/FS.h"
 
 namespace pr {

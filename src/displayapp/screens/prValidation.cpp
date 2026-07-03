@@ -1,14 +1,16 @@
-#include "prValidation.h"
-#include "prLog.h"
-#include "prUtils.h"
+#include "prValidation.hpp"
+#include "prLog.hpp"
+#include "prUtils.hpp"
+#include "prTextWindow.hpp"
 
 namespace pr {
 
 // Requirements:
 // Der Inhalt/shoppingList.txt besteht aus Zeilen.
 // Keine Zeile ist leer.
-// Keine Zeile ist länger als 32 Zeichen.
+// Keine Zeile ist länger als `HALF_SIZE / 2 - 1` Zeichen.
 bool validateShoppingListFile(IFileFactory& ff, uint8_t* buf, size_t size) {
+    constexpr auto  maxLenNetto = (HALF_SIZE >> 1) - 1;
 
     auto f = ff.open(fileTxt, IFileFactory::RDONLY);
     if (!f) return false;
@@ -32,9 +34,9 @@ bool validateShoppingListFile(IFileFactory& ff, uint8_t* buf, size_t size) {
             }
             else {
                 ++count;
-                if (count > 32) {
-                    // Zeile laenger als 32 Zeichen
-                    log("Zeile laenger als 32 Zeichen in /shoppingList.txt");
+                if (count > maxLenNetto) {
+                    // Zeile laenger als maxLenNetto Zeichen
+                    log("Zeile (ohne \\n) laenger als %d Zeichen in /shoppingList.txt", maxLenNetto);
                     return false;
                 }
             }

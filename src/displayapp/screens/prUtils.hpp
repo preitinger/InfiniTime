@@ -1,5 +1,5 @@
 #pragma once
-#include "prInterfaces.h"
+#include "prInterfaces.hpp"
 
 #define SVL(sv) ((int) (sv).size())
 #define SVD(sv) ((sv).data())
@@ -29,5 +29,21 @@ void splitPacket3(IFileFactory& factory);
 bool concatPacket(IFileFactory& factory);
 bool concatPacket2(IFileFactory& factory);
 bool concatPacket3(IFileFactory& factory);
+
+/**
+ * Daten zu einer Vertauschung zweier benachbarter Items.
+ * pos: Index des linken der beiden Items in der Einkaufsliste.
+ * offsetPos: Seek-Offset in `fileTxt` des linken Eintrags
+ * offsetNext: Seek-Offset in `fileTxt` des rechten Eintrags
+ * offsetEnd: Seek-Offset der Position nach dem abschließenden '\n' des rechten Eintrags
+ * 
+ * Falls kein Swap durchgeführt werden konnte, kann pos auf -1 gesetzt werden um dies zu signalisieren.
+ */
+struct SwapData {
+    int pos;
+    int offsetPos;
+    int offsetNext;
+    int offsetEnd;
+};
 
 } // namespace pr

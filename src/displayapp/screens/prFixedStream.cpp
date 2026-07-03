@@ -1,5 +1,5 @@
-#include "prFixedStream.h"
-#include "prLog.h"
+#include "prFixedStream.hpp"
+#include "prLog.hpp"
 #include <algorithm>
 #include <array>
 #include <charconv>

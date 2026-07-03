@@ -1,7 +1,7 @@
 #pragma once
 
-#include "prInterfaces.h"
-#include "prBitsetU32.h"
+#include "prInterfaces.hpp"
+#include "prBitsetU32.hpp"
 
 #include <bitset>
 
