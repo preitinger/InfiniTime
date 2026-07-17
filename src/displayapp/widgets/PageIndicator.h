@@ -1,24 +1,40 @@
 #pragma once
+#include "prBaseIndicator.hpp"
 #include <lvgl/lvgl.h>
 
-namespace Pinetime {
-  namespace Applications {
-    namespace Widgets {
-      class PageIndicator {
-      public:
-        PageIndicator(uint8_t nCurrentScreen, uint8_t nScreens);
-        void Create();
-        void SetPageIndicatorPosition(uint8_t position);
+namespace Pinetime
+{
+namespace Applications
+{
+namespace Widgets
+{
+class PageIndicator : public BaseIndicator
+{
+  public:
+    PageIndicator(uint8_t nCurrentScreen, uint8_t nScreens);
+    void Create();
+    void SetPageIndicatorPosition(uint8_t position, uint8_t newScreens = 0);
 
-      private:
-        uint8_t nCurrentScreen;
-        uint8_t nScreens;
+    private:
+    uint8_t nCurrentScreen;
+    uint8_t nScreens;
+};
 
-        lv_point_t pageIndicatorBasePoints[2];
-        lv_point_t pageIndicatorPoints[2];
-        lv_obj_t* pageIndicatorBase;
-        lv_obj_t* pageIndicator;
-      };
-    }
-  }
+//   class PageIndicator {
+//   public:
+//     PageIndicator(uint8_t nCurrentScreen, uint8_t nScreens);
+//     void Create();
+//     void SetPageIndicatorPosition(uint8_t position, uint8_t newScreens = 0);
+
+//   private:
+//     uint8_t nCurrentScreen;
+//     uint8_t nScreens;
+
+//     lv_point_t pageIndicatorBasePoints[2];
+//     lv_point_t pageIndicatorPoints[2];
+//     lv_obj_t* pageIndicatorBase;
+//     lv_obj_t* pageIndicator;
+//   };
+}
+}
 }

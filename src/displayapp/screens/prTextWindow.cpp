@@ -3,31 +3,30 @@
 #include "prValidation.hpp"
 #include "components/fs/FS.h"
 #include "prLog.hpp"
-#include "nrf_log.h"
 
-
-namespace pr {
-
+namespace pr
+{
 
 // static void mockFile(IFileFactory& ff) {
 //     int code;
-    
+
 //     NRF_LOG_DEBUG("mockFile");
 //     // lfs_file_t file;
-//     IFilePtr f = ff.open(fileTxt, IFileFactory::WRONLY | IFileFactory::CREAT | IFileFactory::EXCL);
-//     if (!f) {
+//     IFilePtr f = ff.open(fileTxt, IFileFactory::WRONLY | IFileFactory::CREAT
+//     | IFileFactory::EXCL); if (!f) {
 //         log("/shoppingList.txt already existing, not mocking now");
 //         return;
 //     }
-//     // code = fs.FileOpen(&file, fileTxt, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_EXCL);
+//     // code = fs.FileOpen(&file, fileTxt, LFS_O_WRONLY | LFS_O_CREAT |
+//     LFS_O_EXCL);
 //     // LFS_DEBUG("open code %d", code);
 //     // if (code < 0) return;
 
 //     char* raw = new char[SIZE];
 //     // BEGIN fake
-//     int rawSize = snprintf(raw, SIZE, "Birnen\nBananen\nRapsoelbutter\nButter\nNescafe\n");
-//     assert(rawSize > 0);
-//     for (int i = 1; i <= 16; ++i) {
+//     int rawSize = snprintf(raw, SIZE,
+//     "Birnen\nBananen\nRapsoelbutter\nButter\nNescafe\n"); assert(rawSize >
+//     0); for (int i = 1; i <= 16; ++i) {
 //         int code = snprintf(raw + rawSize, 256 - rawSize, "Item %d\n", i);
 //         assert(code > 0);
 //         rawSize += code;
@@ -56,45 +55,54 @@ void TextWindow::init(pr::IFileFactory& fileFactory)
         return;
     }
     int code;
-    // if ((code = fs.FileOpen(&file, fileTxt, LFS_O_RDWR | LFS_O_CREAT)) != LFS_ERR_OK) {
+    // if ((code = fs.FileOpen(&file, fileTxt, LFS_O_RDWR | LFS_O_CREAT)) !=
+    // LFS_ERR_OK) {
     //     LFS_WARN("[ShoppingList] /shoppingList.txt nicht gefunden");
     //     return;
     // }
 
     // // BEGIN fake
-    // rawSize = snprintf(raw, SIZE, "Birnen\nBananen\nRapsoelbutter\nButter\nNescafe\n");
+    // rawSize = snprintf(raw, SIZE,
+    // "Birnen\nBananen\nRapsoelbutter\nButter\nNescafe\n");
     // LFS_DEBUG("rawSize=%d\n", rawSize);
     // // END fake
 
     file1->seek(this->offsetRaw);
     // code = fs.FileSeek(&file, this->offsetRaw);
     // if (code < 0) {
-    //     LFS_ERROR("[ShoppingList] FileSeek fuer /shoppingList.txt mit code %d", code);
-    //     return;
+    //     LFS_ERROR("[ShoppingList] FileSeek fuer /shoppingList.txt mit code
+    //     %d", code); return;
     // }
     code = file1->read(raw.data(), SIZE);
     // code = fs.FileRead(&file, raw, SIZE);
-    // if (code < 0) {
-    //     LFS_WARN("[ShoppingList] FileRead fuer /shoppingList.txt mit code %d", code);
-    //     return;
-    // }
+    if (code < 0) {
+        LFS_ERROR("[ShoppingList] FileRead fuer /shoppingList.txt mit code %d",
+                  code);
+        return;
+    }
     rawSize = code;
     LFS_DEBUG("init() rawSize %d", rawSize);
 }
 
 TextWindow::TextWindow()
-    : file1(), raw(),
-    rawSize(0), offsetRaw(0), pos(0), offsetPos(0), dirty(false)
+    : file1(),
+      raw(),
+      rawSize(0),
+      offsetRaw(0),
+      pos(0),
+      offsetPos(0) /* , dirty(false) */
 {
     log("TextWindow()");
     // mockFile(fileFactory);
 }
 
-TextWindow::~TextWindow() {
+TextWindow::~TextWindow()
+{
     LFS_DEBUG("~TextWindow");
 }
 
-std::string_view TextWindow::item(int newPos) {
+std::string_view TextWindow::item(int newPos)
+{
     // LFS_DEBUG("item %d", newPos);
     auto begin = offsetPos;
     auto end = begin;
@@ -107,7 +115,8 @@ std::string_view TextWindow::item(int newPos) {
             if (rawSize == SIZE) {
                 if (forward())
                     return item(newPos);
-                else return "";
+                else
+                    return "";
             }
             return "";
         }
@@ -119,7 +128,8 @@ std::string_view TextWindow::item(int newPos) {
 
     while (newPos < pos) {
         if (begin < 3) {
-            if (!backward()) return "";
+            if (!backward())
+                return "";
             return item(newPos);
         }
         assert(begin > 0);
@@ -136,14 +146,14 @@ std::string_view TextWindow::item(int newPos) {
                 }
                 return item(newPos);
             }
-        }
-        else {
+        } else {
             ++begin;
         }
         --pos;
         offsetPos = begin;
         // LFS_DEBUG("neues offsetPos bei rueckwaerts %d", offsetPos);
-        if (pos == newPos) return snippet(begin, end);
+        if (pos == newPos)
+            return snippet(begin, end);
     }
 
     if (pos == newPos) {
@@ -152,16 +162,27 @@ std::string_view TextWindow::item(int newPos) {
             ++end;
         }
         if (end == rawSize) {
-            if (!forward()) return "";
+            if (!forward())
+                return "";
             return item(newPos);
         }
-        std::string_view res = snippet(begin, end); //std::string_view( raw + begin,  raw + end);
+        std::string_view res =
+            snippet(begin, end); // std::string_view( raw + begin,  raw + end);
         return res;
     }
     return "";
 }
 
-std::string_view TextWindow::snippet(int begin, int end) const {
+int TextWindow::countItems()
+{
+    int pos1;
+    for (pos1 = this->pos; !item(pos1).empty(); ++pos1)
+        ;
+    return pos1;
+}
+
+std::string_view TextWindow::snippet(int begin, int end) const
+{
     const char* data = reinterpret_cast<const char*>(raw.data());
     auto res = std::string_view(data + begin, data + end);
     // LFS_DEBUG("begin %d end%d", begin, end);
@@ -169,12 +190,21 @@ std::string_view TextWindow::snippet(int begin, int end) const {
     return res;
 }
 
-bool TextWindow::forward() {
+/**
+ * Vorbedingung ist, dass offsetPos auf das letzte Item im aktuellen Fenster
+ * zeigt, und wegen der Größenbeschränkungen daher gilt: offsetPos > HALF_SIZE
+ * (oder falls Ende erreicht natürlich rawSize < SIZE).
+ */
+bool TextWindow::forward()
+{
     // std::string dbg(snippet());
     // LFS_DEBUG("before forward ");
-    if (!file1) return false;
-    if (rawSize < SIZE) return false; // end of file reached
-    if (offsetPos < HALF_SIZE) return false;
+    if (!file1)
+        return false;
+    if (rawSize < SIZE)
+        return false; // end of file reached
+    if (offsetPos < HALF_SIZE)
+        return false;
     offsetRaw += HALF_SIZE;
     offsetPos -= HALF_SIZE;
 
@@ -182,30 +212,33 @@ bool TextWindow::forward() {
     file1->seek(this->offsetRaw + HALF_SIZE);
     // int code = fs.FileSeek(&file, this->offsetRaw + HALF_SIZE);
     // if (code < 0) {
-    //     LFS_ERROR("forward: FileSeek fuer /shoppingList.txt mit code %d", code);
-    //     return false;
+    //     LFS_ERROR("forward: FileSeek fuer /shoppingList.txt mit code %d",
+    //     code); return false;
     // }
     memcpy(raw.data(), raw.data() + HALF_SIZE, HALF_SIZE);
     code = file1->read(raw.data() + HALF_SIZE, HALF_SIZE);
     // code = fs.FileRead(&file, raw + HALF_SIZE, HALF_SIZE);
     // if (code < 0) {
-    //     LFS_WARN("forward: FileRead fuer /shoppingList.txt mit code %d", code);
-    //     return false;
+    //     LFS_WARN("forward: FileRead fuer /shoppingList.txt mit code %d",
+    //     code); return false;
     // }
     rawSize = HALF_SIZE + code;
     // LFS_DEBUG("forward: rawSize %d", rawSize);
-
 
     // LFS_DEBUG("forward successful");
     return true;
 }
 
-bool TextWindow::backward() {
+bool TextWindow::backward()
+{
     // LFS_DEBUG("backward");
-    if (!file1) return false;
-    if (offsetRaw == 0) return false;
+    if (!file1)
+        return false;
+    if (offsetRaw == 0)
+        return false;
     int delta = std::min(offsetRaw, HALF_SIZE);
-    if (offsetPos + delta > SIZE) return false;
+    if (offsetPos + delta > SIZE)
+        return false;
     offsetRaw -= delta;
     offsetPos += delta;
     assert(offsetRaw >= 0);
@@ -215,27 +248,48 @@ bool TextWindow::backward() {
     file1->seek(this->offsetRaw);
     // int code = fs.FileSeek(&file, this->offsetRaw);
     // if (code < 0) {
-    //     LFS_ERROR("backward: FileSeek fuer /shoppingList.txt mit code %d", code);
-    //     return false;
+    //     LFS_ERROR("backward: FileSeek fuer /shoppingList.txt mit code %d",
+    //     code); return false;
     // }
     memcpy(raw.data() + HALF_SIZE, raw.data(), HALF_SIZE);
     code = file1->read(raw.data(), HALF_SIZE);
     // code = fs.FileRead(&file, raw, HALF_SIZE);
     // if (code < 0) {
-    //     LFS_WARN("backward: FileRead fuer /shoppingList.txt mit code %d", code);
-    //     return false;
+    //     LFS_WARN("backward: FileRead fuer /shoppingList.txt mit code %d",
+    //     code); return false;
     // }
     if (code != HALF_SIZE) {
         NRF_LOG_ERROR("code not HALF_SIZE, but %d", code);
     }
     assert(code == HALF_SIZE);
     rawSize = SIZE;
-    // LFS_DEBUG("backward: offsetRaw %d, offsetPos %d, rawSize %d", offsetRaw, offsetPos, rawSize);
-
+    // LFS_DEBUG("backward: offsetRaw %d, offsetPos %d, rawSize %d", offsetRaw,
+    // offsetPos, rawSize);
 
     // LFS_DEBUG("backward successful");
     return true;
+}
 
+void TextWindow::jump(int newPos, int newOffset)
+{
+    // raw wird möglichst so gefüllt, dass es [newOffset - HALF_SIZE, newOffset
+    // + HALF_SIZE) enthält. Falls newOffset - HALF_SIZE < 0 ist, wird [0,
+    // std::min(SIZE, <file size>)) geladen. Begrenzung am Ende analog.
+
+    int newOffsetRaw = std::max(0, newOffset - HALF_SIZE);
+    int newOffsetPos = newOffset - offsetRaw;
+
+    this->file1->seek(newOffsetRaw);
+    int code = this->file1->read(this->raw.data(), SIZE);
+
+    if (code < 0) {
+        NRF_LOG_ERROR("x");
+    }
+
+    rawSize = code;
+    offsetRaw = newOffsetRaw;
+    pos = newPos;
+    offsetPos = newOffsetPos;
 }
 
 } // namespace pr

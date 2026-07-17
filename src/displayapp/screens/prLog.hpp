@@ -8,6 +8,7 @@
 #else
 // Für Docker (und alles andere) wird es zum No-Op
 #  define log(...) (void)0
+#  define log_error(...) (void)0
 #endif
 
 // #pragma once

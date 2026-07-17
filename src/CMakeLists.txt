@@ -401,15 +401,28 @@ list(APPEND SOURCE_FILES
         displayapp/screens/ShoppingList.cpp
         displayapp/screens/ShoppingList2.cpp
         displayapp/screens/ShoppingListAdmin.cpp
+        
         displayapp/screens/prDoneState.cpp
         displayapp/screens/prAmountState.cpp
         displayapp/screens/prTextWindow.cpp
+        displayapp/screens/prDb.cpp
         displayapp/screens/prRealFiles.cpp
         displayapp/screens/prFixedStream.cpp
         displayapp/screens/prValidation.cpp
         displayapp/screens/prUtils.cpp
+        displayapp/screens/prUncheckedIndex.cpp
+        displayapp/screens/prMode2.cpp
+        displayapp/screens/prModList.cpp
+        displayapp/screens/prModMenu.cpp
+        displayapp/screens/prWidget.cpp
+        displayapp/screens/prLabel.cpp
+        displayapp/screens/prButton.cpp
+        displayapp/screens/prRingBuf.cpp
+        displayapp/screens/prLvglEvent.cpp
+
         displayapp/Colors.cpp
         displayapp/widgets/Counter.cpp
+        displayapp/widgets/prBaseIndicator.cpp
         displayapp/widgets/PageIndicator.cpp
         displayapp/widgets/DotIndicator.cpp
         displayapp/widgets/StatusIcons.cpp
