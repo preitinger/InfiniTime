@@ -25,7 +25,7 @@ I'll describe all these steps in the following chapters.
 
 ## The datasheet
 
-As I said in the introduction, the datasheet will be your bedside book during your journey as a device driver designer. You'll read it from the beginning to the end once, twice, maybe ten times. Then, each time you'll want to do something new, you'll reopen the file and search for that specific paragraph or diagram than explains how the controller works so that you can figure out how to use it.
+As I said in the introduction, the datasheet will be your bedside book during your journey as a device driver designer. You'll read it from the beginning to the end once, twice, maybe ten times. Then, each time you'll want to do something new, you'll reopen the file and search for that specific paragraph or diagram that explains how the controller works so that you can figure out how to use it.
 
 The schematic of your board (the Pinetime schematics in this case) will also be very important, as you'll need to know how the LCD controller is physically connected to the MCU.
 
